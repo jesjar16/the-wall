@@ -1,0 +1,1 @@
+myDjangoKey = 'django-insecure-en73z+8i5vev_x5u&q%yuur*i^33mz9-wk#5+b=26fbcm1kvvd'
