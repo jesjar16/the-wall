@@ -1,6 +1,7 @@
+from datetime import datetime, timezone
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from wall.models import User
+from wall.models import User, Message, Comment
 from django.contrib import messages
 import bcrypt
 from django.db import IntegrityError
@@ -132,12 +133,163 @@ def login(request):
 
 @login_required
 def success(request):
-    return redirect(reverse("my_homepage"))
+    return redirect(reverse("my_wall"))
     
 @login_required    
 def homepage(request):
     return render(request, "homepage.html")
 
+@login_required    
+def wall(request):
+    # retrieving messages
+    all_messages = Message.objects.all().order_by("-id")
+    
+    # retrieving comments
+    all_comments = Comment.objects.all()
+    
+    context = {
+        'all_messages': all_messages,
+        'all_comments': all_comments
+    }
+    
+    print("Entro a wall")
+    return render(request, "wall.html", context)
+    #return render(request, "messages_comments.html", context)
+
+@login_required    
+def post_message(request):
+    print(request.POST)
+    # form variables are received
+    message = request.POST['message']
+    
+    # errors dict is received
+    errors = Message.objects.basic_validator(request.POST)
+    
+    # retrieving messages
+    all_messages = Message.objects.all().order_by("-id")
+        
+    # retrieving comments
+    all_comments = Comment.objects.all()
+    
+    context = {
+        'all_messages': all_messages,
+        'all_comments': all_comments,
+        'form_send': True
+    }
+        
+    # if there are errors
+    if len(errors) > 0:
+        for key, value in errors.items():
+            messages.error(request, value)
+    else: # no errors
+        id = request.session['user_data']['user_id']
+        this_user = User.objects.get(id=id)
+        
+        # save message
+        Message.objects.create(message=message, user_id=this_user)
+        
+        messages.success(request, "Message posted successfully")
+                        
+    return render(request, "messages_comments.html", context)
+
+@login_required    
+def del_message(request):
+    print(request.POST)
+    # form variables are received
+    message_id = request.POST['message_id']
+    message_to_delete = Message.objects.get(id=message_id)
+    
+    # calculating message age
+    message_date = message_to_delete.created_at
+    date_now = datetime.now(timezone.utc)
+    time_delta = (date_now - message_date)
+    total_seconds = time_delta.total_seconds()
+    minutes = total_seconds/60
+
+    # if message was posted more than 30 mins ago
+    if minutes > 30:
+        messages.error(request, "Cannot delete message")    
+    else:
+        message_to_delete.delete()
+        messages.success(request, "Message deleted")
+        
+    # retrieving messages
+    all_messages = Message.objects.all().order_by("-id")
+    
+    # retrieving comments
+    all_comments = Comment.objects.all()
+    
+    context = {
+        'all_messages': all_messages,
+        'all_comments': all_comments,
+        'form_send': True
+    }
+        
+    return render(request, "messages_comments.html", context)
+
+@login_required    
+def post_comment(request):
+    print(request.POST)
+    # form variables are received
+    comment = request.POST['comment']
+    message_id = request.POST['message_id']
+    
+    # errors dict is received
+    errors = Comment.objects.basic_validator(request.POST)
+       
+    # if there are errors
+    if len(errors) > 0:
+        for key, value in errors.items():
+            messages.error(request, value)
+    else: # no errors
+        user_id = request.session['user_data']['user_id']
+        this_user = User.objects.get(id=user_id)
+        this_message = Message.objects.get(id=message_id)
+        
+        # save message
+        Comment.objects.create(message_id=this_message, user_id=this_user, comment=comment)
+        
+        messages.success(request, "Comment posted successfully")
+                
+    # retrieving messages
+    all_messages = Message.objects.all().order_by("-id")
+    
+    # retrieving comments
+    all_comments = Comment.objects.all()
+    
+    context = {
+        'all_messages': all_messages,
+        'all_comments': all_comments,
+        'form_send': True
+    }
+
+    return render(request, "messages_comments.html", context)
+
+@login_required    
+def del_comment(request):
+    print(request.POST)
+    # form variables are received
+    comment_id = request.POST['comment_id']
+    
+    comment_to_delete= Comment.objects.get(id=comment_id)
+    comment_to_delete.delete()
+    
+    messages.success(request, "Comment deleted")
+    
+    # retrieving messages
+    all_messages = Message.objects.all().order_by("-id")
+    
+    # retrieving comments
+    all_comments = Comment.objects.all()
+    
+    context = {
+        'all_messages': all_messages,
+        'all_comments': all_comments,
+        'form_send': True
+    }
+    
+    return render(request, "messages_comments.html", context)
+    
 @login_required
 def about(request):
     return render(request, "about.html")

@@ -1,0 +1,67 @@
+<div class="messages_comments">
+    {% if form_send == True %}
+        {% include "messages.html" %}
+    {% endif %}
+    <!-- Getting messages / comments beginning -->
+    {% for message in all_messages %}
+        <!-- Message begins -->
+        <div class="row">
+            <div class="col-10 offset-1 bg-secondary text-white p-3 mb-3 rounded">
+                <h6 class="text-info">{{ message.user_id.first_name|capfirst }} {{ message.user_id.last_name|capfirst }} - {{ message.created_at|date:'F d, o' }}</h6>
+                <p>{{ message.message }} </p>
+                <div class="row">
+                    <div class="col-3 offset-9 text-end">
+                        {% if message.user_id.id == request.session.user_data.user_id %}
+                            <button type="button" id="delete_msg" data-bs-preview="{{ message.message|slice:'0:30' }}..." data-bs-msg-id="{{ message.id }}" class="btn btn-danger">Delete message</button>
+                        {% else %}
+                            <button type="button" class="btn btn-danger" disabled>Delete message</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Message ends -->
+
+        {% for comment in all_comments %}
+            {% if comment.message_id.id == message.id %}
+                <!-- Comment begins -->
+                <div class="row">
+                    <div class="col-9 offset-2 border p-3 mb-3 rounded">
+                        <div class="row">
+                            <h6>{{ comment.user_id.first_name|capfirst }} {{ comment.user_id.last_name|capfirst }} - {{ comment.created_at|date:'F d, o' }}</h6>
+                            <p>{{ comment.comment }}</p>
+                        </div>
+                        <div class="row">
+                            <input type="hidden" name="comment_id" value="{{ comment.id }}" >
+                            <div class="col-3 offset-9 text-end">
+                                {% if comment.user_id.id == request.session.user_data.user_id %}
+                                    <button type="button" id="delete_cmt" data-bs-cmt-preview="{{ comment.comment|slice:'0:30' }}..." data-bs-cmt-id="{{ comment.id }}" class="btn btn-danger">Delete comment</button>
+                                {% else %}
+                                    <button type="button" class="btn btn-danger" disabled>Delete comment</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Comment ends -->
+            {% endif %}
+        {% endfor %}
+
+        <form id="comment_form_{{ message.id }}" name="comment_form_{{ message.id }}" action="{% url 'my_post_comment' %}" method="POST">
+            <div class="row">
+                <div class="col-9 offset-2">
+                    {% csrf_token %}
+                    <label for="comment" class="form-label"><h6 class="text-success pt-3">Post a comment</h6></label>
+                    <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+                    <input type="hidden" name="message_id" value="{{ message.id }}" >
+                </div>
+            </div>
+            <div class="row my-3 text-end mb-5">
+                <div class="col-3 offset-8">
+                    <button type="submit" id="comment_btn" class="btn btn-success">Post a comment</button>
+                </div>
+            </div>    
+        </form>
+    {% endfor %}
+<!-- Getting messages / comments ending -->
+</div>

@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Wall{% endblock %}
+
+{% block content %}
+    <script>
+        $( document ).ready(function() {
+            console.log( "ready!" );
+
+            // actions on delete button for message
+            $(document).on("click", "#delete_msg", function () {
+                let messageId = $(this).attr('data-bs-msg-id');
+                let messagePreview = $(this).attr('data-bs-preview');
+
+                $(".modal-footer #message_id").val(messageId);
+                $(".modal-body #modal_message").text(messagePreview);
+
+                $('#deleteMsgModal').modal('show');
+                
+            });
+
+            // actions on delete button for comment
+            $(document).on("click", "#delete_cmt", function () {
+                let commentId = $(this).attr('data-bs-cmt-id');
+                let commentPreview = $(this).attr('data-bs-cmt-preview');
+
+                $(".modal-footer #comment_id").val(commentId);
+                $(".modal-body #modal_comment").text(commentPreview);
+
+                $('#deleteCmtModal').modal('show');
+                
+            });
+        });
+        
+    </script>
+    
+    {% include "menu.html" %}
+
+    <!-- Main content beginning -->
+    <div class="row py-3 ps-5">
+        <div class="row">
+                <h3>CodingDojo Wall</h3>
+        </div>
+        <!-- Message form -->
+        <form id="message_form" name="message_form" action="{% url 'my_post_message' %}" method="POST">
+            <div class="row">
+                <div class="col-10 offset-1">
+                    {% csrf_token %}
+                    <label for="message" class="form-label"><h5 class="text-primary pt-3">Post a message</h5></label>
+                    <textarea class="form-control" id="message" name="message" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="row my-3 text-end mb-5">
+                <div class="col-3 offset-8">
+                    <button type="submit" class="btn btn-primary">Post a message</button>
+                </div>
+            </div>    
+        </form>
+
+        {% include "messages_comments.html" %}
+    </div>
+
+    <!-- Delete Message Modal -->
+    <div class="modal fade" id="deleteMsgModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Delete Confirmation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h5>Are you sure you want to delete the following message?</h5>
+                <p>Message: <span id="modal_message"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <form id="delete_message_form" action="{% url 'my_del_message' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" id="message_id" name="message_id" value="">
+                    <button type="submit" id="confirm_delete_btn" class="btn btn-danger">Yes! I want to delete this!</button>
+                </form>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Delete Comment Modal -->
+    <div class="modal fade" id="deleteCmtModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Delete Confirmation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h5>Are you sure you want to delete the following comment?</h5>
+                <p>Comment: <span id="modal_comment"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <form id="delete_comment_form" action="{% url 'my_del_comment' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" id="comment_id" name="comment_id" value="">
+                    <button type="submit" id="confirm_delete_btn" class="btn btn-danger">Yes! I want to delete this!</button>
+                </form>
+            </div>
+        </div>
+        </div>
+    </div>
+    <!-- Main content end -->
+
+    <script>
+        // Ajax when creating a new MESSAGE
+        $('#message_form').submit(function(e){
+          // preventDefault detiene la activación de la accion predeterminada del evento (e)
+          e.preventDefault();
+          console.log("Form submitted but no HTTP request sent to server!");
+          $.ajax({
+            url: "{% url 'my_post_message' %}",
+            method: "post",
+            data: $(this).serialize(),
+            success: function(serverResponse){
+                    console.log("Received this from server: ", serverResponse)
+                    console.log("I should probably put that in the DOM (messages)...")
+
+                    // updating messages_comments class in separate file
+                    $('.messages_comments').html(serverResponse)
+
+                    // creating variables to track new toastr messages
+                    let answer = $('.messages_comments').html(serverResponse)
+                    let newMessages = answer.find('#messages').html();
+
+                    // cleaning any other toastr
+                    $('#messages').html();
+                    // appending new toastr messages
+                    $('#messages').append(newMessages);
+                }
+            })
+        });
+
+        // Ajax when deleting MESSAGE
+        $('#delete_message_form').submit(function(e){
+          // preventDefault detiene la activación de la accion predeterminada del evento (e)
+          e.preventDefault();
+          console.log("Form submitted but no HTTP request sent to server!");
+          $.ajax({
+            url: "{% url 'my_del_message' %}",
+            method: "post",
+            data: $(this).serialize(),
+            success: function(serverResponse){
+                    console.log("Received this from server: ", serverResponse)
+                    console.log("I should probably put that in the DOM...")
+
+                    // updating messages_comments class in separate file
+                    $('.messages_comments').html(serverResponse)
+
+                    // creating variables to track new toastr messages
+                    let answer = $('.messages_comments').html(serverResponse)
+                    let newMessages = answer.find('#messages').html();
+
+                    // cleaning any other toastr
+                    $('#messages').html();
+                    // appending new toastr messages
+                    $('#messages').append(newMessages);
+
+                    $('#deleteMsgModal').modal('hide');
+                }
+            })
+        });
+
+        // Ajax when creating a new COMMENT
+        $(document).on("click", "#comment_btn", function() {
+            // getting the current form
+            let form = $(this).parents('form:first');
+
+            $(form).submit(function(e){
+                // preventDefault detiene la activación de la accion predeterminada del evento (e)
+                e.preventDefault();
+                console.log("Form submitted but no HTTP request sent to server!");
+                $.ajax({
+                    url: "{% url 'my_post_comment' %}",
+                    method: "post",
+                    data: $(this).serialize(),
+                    success: function(serverResponse){
+                            console.log("Received this from server: ", serverResponse)
+                            console.log("I should probably put that in the DOM...")
+
+                            // updating messages_comments class in separate file
+                            $('.messages_comments').html(serverResponse)
+
+                            // creating variables to track new toastr messages
+                            let answer = $('.messages_comments').html(serverResponse)
+                            let newMessages = answer.find('#messages').html();
+
+                            // cleaning any other toastr
+                            $('#messages').html();
+                            // appending new toastr messages
+                            $('#messages').append(newMessages);
+
+                            //$('#deleteMsgModal').modal('hide');
+                        }
+                    })
+            });
+        });
+
+        // Ajax when deleting COMMENT
+        $('#delete_comment_form').submit(function(e){
+          // preventDefault detiene la activación de la accion predeterminada del evento (e)
+          e.preventDefault();
+          console.log("Form submitted but no HTTP request sent to server!");
+          $.ajax({
+            url: "{% url 'my_del_comment' %}",
+            method: "post",
+            data: $(this).serialize(),
+            success: function(serverResponse){
+                    console.log("Received this from server: ", serverResponse)
+                    console.log("I should probably put that in the DOM...")
+
+                    // updating messages_comments class in separate file
+                    $('.messages_comments').html(serverResponse)
+
+                    // creating variables to track new toastr messages
+                    let answer = $('.messages_comments').html(serverResponse)
+                    let newMessages = answer.find('#messages').html();
+
+                    // cleaning any other toastr
+                    $('#messages').html();
+                    // appending new toastr messages
+                    $('#messages').append(newMessages);
+
+                    $('#deleteCmtModal').modal('hide');
+                }
+            })
+        });
+    </script>
+
+{% endblock %}    

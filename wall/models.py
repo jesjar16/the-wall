@@ -95,14 +95,60 @@ class UserManager(models.Manager):
         return errors
 
 class User(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
     email = models.CharField(max_length=255, unique=True)    
     birthday = models.DateField(default=datetime.now)
-    password = models.CharField(max_length=100)
+    password = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = UserManager()
 
     def __repr__(self):
-        return f"Show: (ID: {self.id}) -> {self.first_name} {self.last_name} by {self.email}"
+        return f"User: (ID: {self.id}) -> {self.first_name} {self.last_name} by {self.email}"
+    
+class MessageManager(models.Manager):
+    def basic_validator(self, postData):
+
+        # errors dictionnary
+        errors = {}
+        
+        # checking first name
+        if len(postData['message']) == 0:
+            errors['message'] = "Message can not be empty"
+            
+        return errors
+                
+    
+class Message(models.Model):
+    message = models.TextField(default="None")
+    user_id = models.ForeignKey(User, related_name="messages", on_delete = models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    objects = MessageManager()
+
+    def __repr__(self):
+        return f"Message: (ID: {self.id}) -> {self.user_id} {self.message}"
+    
+class CommentManager(models.Manager):
+    def basic_validator(self, postData):
+
+        # errors dictionnary
+        errors = {}
+        
+        # checking first name
+        if len(postData['comment']) == 0:
+            errors['comment'] = "Comment can not be empty"
+            
+        return errors
+    
+class Comment(models.Model):
+    message_id = models.ForeignKey(Message, related_name="messages", on_delete = models.CASCADE)
+    user_id = models.ForeignKey(User, related_name="comments", on_delete = models.CASCADE)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    objects = CommentManager()
+
+    def __repr__(self):
+        return f"Comment: (ID: {self.id}) -> {self.comment}"    

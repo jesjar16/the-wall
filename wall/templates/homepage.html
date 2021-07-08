@@ -5,7 +5,7 @@
 {% block content %}
     {% include "menu.html" %}
     <div class="row">
-        <div class="row py-3">
+        <div class="row py-3 ps-5">
             <div class="col-10">
                 <h3>Success! Welcome, {{ request.session.user_data.first_name }} {{ request.session.user_data.last_name }}!</h3>
                 <h5 class="text-success pt-3">Successfully 
@@ -17,7 +17,7 @@
                 </h5>
             </div>
         </div>
-        <div class="row py-3">
+        <div class="row py-3 ps-5">
             <p>Here's the homepage main content</p>
         </div>
     </div>
